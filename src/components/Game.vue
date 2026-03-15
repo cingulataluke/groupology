@@ -76,7 +76,7 @@ onMounted(() => {
 
 <template>
     <p>
-        Make {{ groupAmount }} groups ! (By combining two at a time.)
+        Make {{ group_amount }} groups ! (By combining two at a time.)
         Score: {{ score }} Mistakes: {{ mistakes }}
     </p>
 
