@@ -1,26 +1,29 @@
 <script setup>
-import { ref } from 'vue'
+import { ref, computed } from 'vue'
 import GroupEditor from './components/GroupEditor.vue'
 import Game from './components/Game.vue'
 
 // shared data
-const sharedGroups = ref({
-  'Mammals': ['Cat', 'Dog', 'Wolf', 'Lion'],
-  'Musical Instruments': ['Guitar', 'Piano', 'Flute']
-})
+const sharedGroups = ref({})
 
 // start on the setup screen
-const currentView = ref('editor') 
+const currentView = ref('editor')
+
+const canPlay = computed(() => {
+  const categoriesWithTwoOrMore = Object.values(sharedGroups.value).filter(group => group.length >= 2)
+  return categoriesWithTwoOrMore.length >= 2
+})
 </script>
 
 <template>
   <div>
-    
+
     <div v-if="currentView === 'editor'">
       <GroupEditor :groups="sharedGroups" />
 
       <div class="play-container">
-        <button class="play-button" @click="currentView = 'project'">
+        <button class="play-button" :disabled="!canPlay" :title="!canPlay ? 'Needs at least 2 categories with 2 or more items' : ''"
+          @click="currentView = 'project'">
           Play !
         </button>
       </div>
