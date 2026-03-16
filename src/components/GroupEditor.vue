@@ -1,6 +1,8 @@
 <script setup>
 import { ref } from 'vue'
 
+import { sample_queries } from '../data/sample_queries.js'
+
 const props = defineProps({
     groups: Object
 })
@@ -8,10 +10,11 @@ const props = defineProps({
 const currentGroupKey = ref(null)
 const newCategoryName = ref('')
 const isFetching = ref(false)
-const sparqlQuery = ref(`SELECT ?itemLabel WHERE {
-  ?item wdt:P31 wd:Q16398.
-  SERVICE wikibase:label { bd:serviceParam wikibase:language "[AUTO_LANGUAGE],en". }
-} LIMIT 10`)
+const sparqlQuery = ref(null)
+
+function loadExampleQuery(queryText) {
+    sparqlQuery.value = queryText
+}
 
 function selectGroup(key) {
     currentGroupKey.value = key
@@ -47,7 +50,7 @@ async function populateFromWikidata() {
         props.groups[currentGroupKey.value].push(...newItems)
         props.groups[currentGroupKey.value] = [...new Set(props.groups[currentGroupKey.value])]
     } catch (error) {
-        alert("Failed to fetch from Wikidata.")
+        alert("Failed to fetch from Wikidata : " + error.message)
     } finally {
         isFetching.value = false
     }
@@ -92,6 +95,16 @@ async function populateFromWikidata() {
                 <button class="btn" @click="populateFromWikidata" :disabled="isFetching">
                     {{ isFetching ? 'Fetching...' : 'Run Query' }}
                 </button>
+
+                <div class="examples-section">
+                    <h4>Example Queries:</h4>
+                    <ul class="examples-list">
+                        <li v-for="(queryText, queryName) in sample_queries" :key="queryName">
+                            <span>{{ queryName }}</span>
+                            <button class="btn load-btn" @click="loadExampleQuery(queryText)">Load</button>
+                        </li>
+                    </ul>
+                </div>
             </div>
             
         </div>
@@ -152,5 +165,35 @@ async function populateFromWikidata() {
     margin-bottom: 10px;
     box-sizing: border-box; /* prevents text area from breaking out of the container */
     resize: vertical; /* allows user to make it taller, but not wider */
+}
+
+.examples-section {
+    margin-top: 25px;
+    border-top: 1px solid #ddd;
+    padding-top: 10px;
+}
+
+.examples-list {
+    list-style-type: none;
+    padding: 0;
+    margin: 0;
+}
+
+.examples-list li {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    background: #fff;
+    padding: 6px 10px;
+    border: 1px solid #eee;
+    margin-bottom: 5px;
+    border-radius: 3px;
+    font-size: 0.9em;
+}
+
+.load-btn {
+    padding: 2px 8px;
+    font-size: 0.8em;
+    cursor: pointer;
 }
 </style>
