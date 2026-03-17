@@ -15,11 +15,12 @@ const importCode = ref('')
 const shareCode = ref('')
 const copyMessage = ref('')
 
-function generateShareCode() {
+async function generateShareCode() {
   try {
     const jsonString = JSON.stringify(sharedGroups.value)
-    // encodeURIComponent ensures emojis and special characters don't break the Base64 encoding
-    shareCode.value = btoa(encodeURIComponent(jsonString))
+    const compressed = new Blob([jsonString]).stream()
+      .pipeThrough(new CompressionStream("gzip"))
+    shareCode.value = (await new Response(compressed).bytes()).toBase64() 
     copyMessage.value = ''
   } catch (e) {
     alert("Error generating share code.")
@@ -37,13 +38,15 @@ async function copyToClipboard() {
   }
 }
 
-function loadFromCode(playImmediately) {
+async function loadFromCode(playImmediately) {
   if (!importCode.value.trim()) return
   
   try {
-    // decode from Base64
-    const jsonString = decodeURIComponent(atob(importCode.value.trim()))
-    const parsedData = JSON.parse(jsonString)
+    // decode from gzipped Base64
+    const compressed = Uint8Array.fromBase64(importCode.value.trim())
+    const decompressed = new Blob([compressed]).stream()
+      .pipeThrough(new DecompressionStream("gzip"))
+    const parsedData = await new Response(decompressed).json()
 
     // apply to groups
     sharedGroups.value = parsedData
