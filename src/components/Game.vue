@@ -1,5 +1,7 @@
 <script setup>
-import { ref, onMounted } from 'vue'
+import { ref, onMounted, watch } from 'vue'
+
+const STORAGE_KEY = 'groupology-data'
 
 const props = defineProps({
     groups: Object
@@ -39,6 +41,10 @@ function selectItem(item) {
             if (indexToRemove > -1) {
                 items.value.splice(indexToRemove, 1)
             }
+
+            watch(items, (val) => { 
+                localStorage.setItem(STORAGE_KEY, JSON.stringify(val))
+            }, { deep: true })
         } else { // both items in different categories
             mistakes.value++
         }
@@ -47,6 +53,14 @@ function selectItem(item) {
 }
 
 function initializeGame() {
+    const saved = localStorage.getItem(STORAGE_KEY)
+
+    if (saved) {
+        // Restore from localStorage directly, skip recomputing from props
+        items.value = JSON.parse(saved)
+        return
+    }
+
     const flatItems = []
 
     for (const [categoryName, groupData] of Object.entries(props.groups)) {
@@ -66,9 +80,10 @@ function initializeGame() {
             })
         })
     }
-
-    items.value = flatItems
     shuffle(items.value)
+    items.value = flatItems
+
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(items.value))
 }
 
 // Start the game when the component appears on screen!
@@ -88,8 +103,7 @@ onMounted(() => {
             <button class="item-button" :class="{
                 'selected': item === selectedItem,
                 'bold': item.names.length > 1
-            }"
-                :style="item.names.length >= item.targetSize ? { backgroundColor: item.color } : {}"
+            }" :style="item.names.length >= item.targetSize ? { backgroundColor: item.color } : {}"
                 :title="item.names.join('\n')" :disabled="item.names.length >= item.targetSize"
                 @click="selectItem(item)">
                 <template v-if="item.names.length >= item.targetSize">
