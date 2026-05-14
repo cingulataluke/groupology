@@ -4,16 +4,25 @@ import GroupEditor from './components/GroupEditor.vue'
 import Game from './components/Game.vue'
 
 // shared data
+const STORAGE_KEY = 'groupology-data'
+
 const sharedGroups = ref({})
 
-// start on the setup screen
-const currentView = ref('editor')
+// go straight to game if saved game state exists
+const currentView = ref(
+  localStorage.getItem(STORAGE_KEY) ? 'game' : 'editor'
+)
 
 const requireEqualSizes = ref(false)
 
 const importCode = ref('')
 const shareCode = ref('')
 const copyMessage = ref('')
+
+function goToEditor() {
+  localStorage.removeItem(STORAGE_KEY)
+  currentView.value = 'editor'
+}
 
 async function generateShareCode() {
   try {
@@ -54,7 +63,7 @@ async function loadFromCode(playImmediately) {
 
     // go straight to the game if requested
     if (playImmediately) {
-      currentView.value = 'project'
+      currentView.value = 'game'
     }
   } catch (e) {
     alert("Invalid share code! Please check what you pasted.")
@@ -141,7 +150,7 @@ const playTooltip = computed(() => {
           </label>
         </div>
 
-        <button class="play-button" :disabled="!canPlay" :title="playTooltip" @click="currentView = 'project'">
+        <button class="play-button" :disabled="!canPlay" :title="playTooltip" @click="currentView = 'game'">
           Play !
         </button>
       </div>
@@ -149,8 +158,8 @@ const playTooltip = computed(() => {
       <GroupEditor :groups="sharedGroups" />
     </div>
 
-    <div v-if="currentView === 'project'">
-      <button @click="currentView = 'editor'">← Back to Editor</button>
+    <div v-if="currentView === 'game'">
+      <button @click="goToEditor">← Back to Editor</button>
       <Game :groups="sharedGroups" />
     </div>
 
